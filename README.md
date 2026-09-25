@@ -1,93 +1,85 @@
 # Helmes-2026
 
+Tasks:
+1. Correct all of the deficiencies in index.html
 
+2. "Sectors" selectbox:
+   2.1. Add all the entries from the "Sectors" selectbox to database
+   2.2. Compose the "Sectors" selectbox using data from database
 
-## Getting started
+3. Perform the following activities after the "Save" button has been pressed:
+   3.1. Validate all input data (all fields are mandatory)
+   3.2. Store all input data to database (Name, Sectors, Agree to terms)
+   3.3. Refill the form using stored data
+   3.4. Allow the user to edit his/her own data during the session
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Write us Your best code!
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+After completing the tasks, please provide us with:
+1. Full database dump (structure and data)
+2. Source code
 
-## Add your files
+---
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Tech stack
 
+| Layer    | Technology |
+|----------|------------|
+| Database | PostgreSQL 16, run via Docker Compose, schema managed with Flyway |
+| Backend  | Java 21, Spring Boot 3.5 (Web, Data JPA, Validation), Gradle |
+| Frontend | React 19 + TypeScript, built with Vite, plain CSS (no UI/component library). react-hook-form + zod for form state and validation, TanStack Query for data fetching and the save mutation |
+| Tests    | Backend: JUnit 5 + MockMvc + Testcontainers (Postgres). Frontend: Vitest + React Testing Library |
+
+## How to run
+
+Prerequisites: Docker Desktop, JDK 21, Node 20+.
+
+```bash
+docker compose up -d db                 # start Postgres on :5432
+
+cd backend
+./gradlew bootRun                       # API on :8080 (JAVA_HOME must point at a JDK 21)
+
+cd frontend
+npm install
+npm run dev                             # UI on :5173, proxies /api to :8080
 ```
-cd existing_repo
-git remote add origin https://gitlab.cs.taltech.ee/jakask/helmes-2026.git
-git branch -M main
-git push -uf origin main
+
+Open `http://localhost:5173`.
+
+Tests:
+
+```bash
+cd backend;  ./gradlew test              # backend unit + integration tests (needs Docker)
+cd frontend; npm test -- --run          # frontend tests
+cd frontend; npm run build              # type-check + production build
 ```
 
-## Integrate with your tools
+## Task 1 – deficiencies fixed
 
-* [Set up project integrations](https://gitlab.cs.taltech.ee/jakask/helmes-2026/-/settings/integrations)
+The original `docs/original-index.html` had the following problems, all fixed in the React form:
 
-## Collaborate with your team
+1. Is not a valid HTML document: no `<!DOCTYPE html>`, `<html lang>`, `<head>`, `<meta charset>` (so `Children's` could render garbled), viewport, or `<title>`.
+2. Has no `<form>` element, so the Save button submits nothing, and it uses `<input type="submit">` outside any form.
+3. Inputs have no `name`/`id`, so no data would be sent even inside a form.
+4. Has no `<label>` elements. The captions aren't linked to their controls, which is bad for screen readers, and clicking "Agree to terms" doesn't toggle the checkbox.
+5. Has no validation, even though all fields are mandatory.
+6. Hardcodes the sectors in HTML (they now come from the database).
+7. Fakes the hierarchy with literal `&nbsp;` runs in the markup (it's now generated from the parent/child data in the database).
+8. Has trailing whitespace in several option labels (e.g. `"Fish & fish products "`).
+9. Has three options called "Other" that can't be told apart (each option now shows its full path on hover).
+10. Uses `<br />` for layout.
+11. Gives no feedback on success or failure, and no hint on how to multi-select.
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+## Design notes
 
-## Test and Deploy
+- Sector ids and their hierarchy are kept from the original select box (`parent_id` self-reference), so they remain the natural, stable ids rather than newly generated ones.
+- "Allow the user to edit his/her own data during the session" is implemented with a server-side `HttpSession` (`JSESSIONID` cookie): the session stores the id of the submission it created, and the database id is never exposed to the client. A new browser session (e.g. a private window) always starts with an empty form.
+- Validation rules and messages are defined once per side and kept in sync by hand: `frontend/src/validation.ts` (a zod schema used by react-hook-form) mirrors the Bean Validation rules on `backend/.../submission/SubmissionRequest.java`. The client runs its copy first for immediate feedback; the server's is authoritative, since the client can't be trusted.
+- The sectors `<select multiple>` indents child options with non-breaking spaces (`\u00A0`), not regular spaces — browsers (and some assistive tech) can collapse leading regular whitespace inside `<option>` text, so a plain space silently loses the indentation.
+- Data fetching and the save mutation go through TanStack Query (`useQuery`/`useMutation`) rather than hand-rolled `fetch` + `useState` bookkeeping; form state and validation go through react-hook-form with a zod resolver rather than manually tracked fields.
 
-Use the built-in continuous integration in GitLab.
+## Deliverables
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- **Database dump**: [`database/dump.sql`](database/dump.sql) — full schema (`sector`, `submission`, `submission_sector`, `flyway_schema_history`) and data, including real submissions created while verifying the app.
+- **Source code**: [`database/`](database) (Flyway migrations live under `backend/src/main/resources/db/migration`), [`backend/`](backend) (Spring Boot API), [`frontend/`](frontend) (React UI).

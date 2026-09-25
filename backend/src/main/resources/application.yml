@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: sectors
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/helmes}
+    username: ${DB_USER:helmes}
+    password: ${DB_PASSWORD:helmes}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 30m

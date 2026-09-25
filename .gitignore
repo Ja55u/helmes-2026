@@ -1,0 +1,27 @@
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/*
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+
+# Env / logs
+.env
+*.log
+
+# Backend (Gradle)
+backend/.gradle/
+backend/build/
+backend/bin/
+backend/out/
+backend/HELP.md
+
+# Frontend (Vite/npm)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
